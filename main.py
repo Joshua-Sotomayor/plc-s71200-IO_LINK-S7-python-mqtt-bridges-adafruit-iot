@@ -3,8 +3,6 @@ from config import config
 from mqtt_controlador import AdafruitPublisher
 from plc_controlador import plc_controlador
 
-
-
 try:
     # Inicializar PLC
     plc = plc_controlador(config.PLC_IP, config.PLC_RACK, config.PLC_SLOT)
@@ -16,9 +14,9 @@ try:
 
     # Loop principal
     while True:
-        for var_name, (DB, START, TIPO, RANGO_MIN, RANGO_MAX, CANAL_ERRORES, VALORES_ESPECIALES) in config.VARIABLES.items():
+        for var_name, (DB, START, BIT_INDEX, TIPO, RANGO_MIN, RANGO_MAX, CANAL_ERRORES, VALORES_ESPECIALES) in config.VARIABLES.items():
             if TIPO == "BOOL":
-                value = plc.leer_bool(DB, START, 0, 0)  # Asumiendo byte 0 y bit 0 para BOOL
+                value = plc.leer_bool(DB, START, 0, BIT_INDEX)  # Asumiendo byte 0 y bit 0 para BOOL
                 if value != RANGO_MIN and value != RANGO_MAX: 
                     value = -101 # Valor fuera de rango para indicar que no se publica
             elif TIPO == "INT":
