@@ -16,7 +16,7 @@ try:
 
     # Loop principal
     while True:
-        for var_name, (DB, START, TIPO, RANGO_MIN, RANGO_MAX) in config.VARIABLES.items():
+        for var_name, (DB, START, TIPO, RANGO_MIN, RANGO_MAX, CANAL_ERRORES, VALORES_ESPECIALES) in config.VARIABLES.items():
             if TIPO == "BOOL":
                 value = plc.leer_bool(DB, START, 0, 0)  # Asumiendo byte 0 y bit 0 para BOOL
                 if value != RANGO_MIN and value != RANGO_MAX: 
@@ -34,8 +34,13 @@ try:
             else:
                 print(f"Tipo de dato no soportado: {TIPO}")
                 continue
-
+            
             mqtt_pub.publish(var_name, value)
+            if value == -101 and value not in [v[0] for v in VALORES_ESPECIALES]:  # Solo publicar error si no es un valor especial
+                mqtt_pub.publish(CANAL_ERRORES, f"Valor fuera de rango para {var_name}: {value}")
+            if value in [v[0] for v in VALORES_ESPECIALES]:  # Publicar error si es un valor especial
+                error_desc = next((v[1] for v in VALORES_ESPECIALES if v[0] == value), "Valor especial desconocido")
+                mqtt_pub.publish(CANAL_ERRORES, f"ERROR. Valor especial para {var_name}: {error_desc} ({value})")
 
             sleep(5)  # Esperar 5 segundos antes de la siguiente lectura
             
