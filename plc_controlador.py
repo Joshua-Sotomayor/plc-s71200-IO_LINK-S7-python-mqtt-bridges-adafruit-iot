@@ -6,15 +6,22 @@ class plc_controlador:
         self.plc_ip : str = IP
         self.plc_rack : int = RACK
         self.plc_slot : int = SLOT
-        self.plc : snap7.client.Client = None
+        self.plc_core : snap7.client.Client = None
 
     def conectar(self):
-        self.plc = snap7.client.Client()
-        self.plc.connect(self.plc_ip, self.plc_rack, self.plc_slot)
-        print(f"Conectado al PLC en {self.plc_ip} (Rack: {self.plc_rack}, Slot: {self.plc_slot})")
+        try:
+            self.plc_core = snap7.client.Client()
+            self.plc_core.connect(self.plc_ip, self.plc_rack, self.plc_slot)
+            
+            if self.plc_core.get_connected():
+                print(f"[+] Éxito: Conectado al plc_core en {self.plc_ip}")
+            else:
+                print(f"[-] Error: No se pudo establecer conexión con {self.plc_ip}")
+        except Exception as e:
+            print(f"[!] Error crítico durante la conexión: {e}")
 
     def leer_datos(self, DB: int, START: int, SIZE: int):
-        return self.plc.db_read(DB, START, SIZE)
+        return self.plc_core.db_read(DB, START, SIZE)
 
     def leer_bool(self, DB: int, START: int, BYTE_INDEX: int, BIT_INDEX: int):
         data = self.leer_datos(DB, START, 1)
@@ -33,4 +40,4 @@ class plc_controlador:
         return get_string(data, BYTE_INDEX)
     
     def disconnect(self):
-        self.plc.disconnect()
+        self.plc_core.disconnect()
